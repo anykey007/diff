@@ -13,50 +13,47 @@ module Diff
   # S 10010000000
 
   class Lcs
-    attr_reader :original_line, :new_line
+    attr_reader :original_array, :new_array
 
-    def initialize(original_line, new_line)
-      @original_line = original_line
-      @new_line      = new_line
+    def initialize(original_array, new_array)
+      fail ArgumentError, "Arguments must be arrays." \
+        unless original_array.kind_of?(Array) && new_array.kind_of?(Array)
+
+      @original_array = original_array
+      @new_array      = new_array
     end
 
     def find
-      return unless original_line && new_line
-
       lcs_length        = 0
       last_lcs_char_pos = 0
 
-      new_line.size.times do |row_index|
-        positions = substring_positions(new_line[row_index], original_line)
+      new_array.each_with_index do |new_array_value, i|
+        original_array.each_with_index do |original_array_value, j|
+          next unless new_array_value == original_array_value
 
-        positions.each do |col_index|
-          table_of_accordance[row_index][col_index] = 1
+          table_of_accordance[i][j] = 1
 
-          next if row_index == 0 || col_index == 0
+          next if i == 0 || j == 0
 
-          prev_lcs_length = table_of_accordance[row_index - 1][col_index - 1]
+          prev_lcs_length = table_of_accordance[i - 1][j - 1]
           next if prev_lcs_length == 0
 
-          table_of_accordance[row_index][col_index] = prev_lcs_length + 1
-          next unless table_of_accordance[row_index][col_index] > lcs_length
+          table_of_accordance[i][j] = prev_lcs_length + 1
+          next unless table_of_accordance[i][j] > lcs_length
 
-          lcs_length        = table_of_accordance[row_index][col_index]
-          last_lcs_char_pos = col_index
+          lcs_length        = table_of_accordance[i][j]
+          last_lcs_char_pos = j
         end
       end
 
-      return '' if lcs_length == 0
-      original_line[last_lcs_char_pos - lcs_length + 1..last_lcs_char_pos]
+      return [] if lcs_length == 0
+      original_array[last_lcs_char_pos - lcs_length + 1..last_lcs_char_pos]
     end
 
     private
 
     def table_of_accordance
-       @_table_of_accordance ||= Array.new(new_line.size) { Array.new(original_line.size, 0) }
-    end
-
-    def substring_positions(substring, string)
-      string.enum_for(:scan, substring).map { $~.offset(0)[0] }
+       @_table_of_accordance ||= Array.new(new_array.size) { Array.new(original_array.size, 0) }
     end
   end
 end
